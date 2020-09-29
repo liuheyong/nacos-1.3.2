@@ -1,0 +1,10 @@
+一、address ：地址服务相关
+二、api ： 这个里面，主要是把naming和config的api进行了抽取，从结构上看更清晰一些，api的具体实现，都还在client模块里面
+三、client： 这个里面放的是Nacos客户端的代码，服务发现和配置管理2个功能的客户端
+四、cmdb：Nacos近期发布了0.7.0版本，该版本支持对接第三方CMDB获取CMDB数据、使用Selector机制来配置服务的路由类型、支持单机模式使用MySQL数据库、上线Node.js客户端，并修复了一些bug
+五、common：共用工具类
+六、config： Nacos配置中心的实现
+七、console: Nacos 控制台相关实现
+八、core： 属性加载，初始化，监听器相关
+九、distribution：发布相关
+十、naming：Nacos的核心功能，动态服务发现
