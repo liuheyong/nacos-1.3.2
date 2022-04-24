@@ -40,14 +40,14 @@ import java.util.Map;
 @RestController
 @RequestMapping(Constants.LISTENER_CONTROLLER_PATH)
 public class ListenerController {
-    
+
     private final ConfigSubService configSubService;
-    
+
     @Autowired
     public ListenerController(ConfigSubService configSubService) {
         this.configSubService = configSubService;
     }
-    
+
     /**
      * Get subscribe information from client side.
      */
@@ -82,9 +82,7 @@ public class ListenerController {
             }
             gls.setLisentersGroupkeyStatus(configMd5Status);
         }
-        
         return gls;
     }
-    
 }
 

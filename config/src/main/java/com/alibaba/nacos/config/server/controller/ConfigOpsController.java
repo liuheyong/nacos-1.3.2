@@ -18,8 +18,8 @@ package com.alibaba.nacos.config.server.controller;
 
 import com.alibaba.nacos.common.model.RestResult;
 import com.alibaba.nacos.common.model.RestResultUtils;
-import com.alibaba.nacos.common.utils.Objects;
 import com.alibaba.nacos.common.notify.NotifyCenter;
+import com.alibaba.nacos.common.utils.Objects;
 import com.alibaba.nacos.config.server.constant.Constants;
 import com.alibaba.nacos.config.server.model.event.DerbyImportEvent;
 import com.alibaba.nacos.config.server.service.datasource.DynamicDataSource;
@@ -38,12 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,19 +54,19 @@ import java.util.Map;
 @RestController
 @RequestMapping(Constants.OPS_CONTROLLER_PATH)
 public class ConfigOpsController {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigOpsController.class);
-    
+
     protected final PersistService persistService;
-    
+
     private final DumpService dumpService;
-    
+
     @Autowired
     public ConfigOpsController(PersistService persistService, DumpService dumpService) {
         this.persistService = persistService;
         this.dumpService = dumpService;
     }
-    
+
     /**
      * Manually trigger dump of a local configuration file.
      */
@@ -82,13 +77,13 @@ public class ConfigOpsController {
         LOGGER.info("finish to dump all data from store.");
         return HttpServletResponse.SC_OK + "";
     }
-    
+
     @PutMapping(value = "/log")
     public String setLogLevel(@RequestParam String logName, @RequestParam String logLevel) {
         LogUtil.setLogLevel(logName, logLevel);
         return HttpServletResponse.SC_OK + "";
     }
-    
+
     /**
      * // TODO In a future release, the front page should appear operable The interface to the Derby operations query
      * can only run select statements and is a direct query to the native Derby database without any additional logic.
@@ -104,7 +99,7 @@ public class ConfigOpsController {
         try {
             if (PropertyUtil.isEmbeddedStorage()) {
                 LocalDataSourceServiceImpl dataSourceService = (LocalDataSourceServiceImpl) DynamicDataSource
-                        .getInstance().getDataSource();
+                    .getInstance().getDataSource();
                 if (StringUtils.startsWithIgnoreCase(sql, selectSign)) {
                     if (!StringUtils.containsIgnoreCase(sql, limitSign)) {
                         sql += limit;
@@ -120,7 +115,7 @@ public class ConfigOpsController {
             return RestResultUtils.failed(e.getMessage());
         }
     }
-    
+
     /**
      * // TODO the front page should appear operable The external data source is imported into derby.
      *
@@ -152,5 +147,4 @@ public class ConfigOpsController {
         }, response);
         return response;
     }
-    
 }

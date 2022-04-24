@@ -109,13 +109,12 @@ public class AuthConfigs {
     }
 
     @Bean
-    public FilterRegistrationBean authFilterRegistration() {
+    public FilterRegistrationBean<AuthFilter> authFilterRegistration() {
         FilterRegistrationBean<AuthFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(authFilter());
         registration.addUrlPatterns("/*");
         registration.setName("authFilter");
         registration.setOrder(6);
-
         return registration;
     }
 

@@ -41,28 +41,27 @@ import javax.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping(Constants.COMMUNICATION_CONTROLLER_PATH)
 public class CommunicationController {
-    
+
     private final DumpService dumpService;
-    
+
     private final LongPollingService longPollingService;
-    
+
     private String trueStr = "true";
-    
+
     @Autowired
     public CommunicationController(DumpService dumpService, LongPollingService longPollingService) {
         this.dumpService = dumpService;
         this.longPollingService = longPollingService;
     }
-    
+
     /**
      * Notify the change of config information.
-     *
      */
     @GetMapping("/dataChange")
     public Boolean notifyConfigInfo(HttpServletRequest request, @RequestParam("dataId") String dataId,
-            @RequestParam("group") String group,
-            @RequestParam(value = "tenant", required = false, defaultValue = StringUtils.EMPTY) String tenant,
-            @RequestParam(value = "tag", required = false) String tag) {
+                                    @RequestParam("group") String group,
+                                    @RequestParam(value = "tenant", required = false, defaultValue = StringUtils.EMPTY) String tenant,
+                                    @RequestParam(value = "tag", required = false) String tag) {
         dataId = dataId.trim();
         group = group.trim();
         String lastModified = request.getHeader(NotifyService.NOTIFY_HEADER_LAST_MODIFIED);
@@ -76,25 +75,23 @@ public class CommunicationController {
         }
         return true;
     }
-    
+
     /**
      * Get client config information of subscriber in local machine.
-     *
      */
     @GetMapping("/configWatchers")
     public SampleResult getSubClientConfig(@RequestParam("dataId") String dataId, @RequestParam("group") String group,
-            @RequestParam(value = "tenant", required = false) String tenant, ModelMap modelMap) {
+                                           @RequestParam(value = "tenant", required = false) String tenant, ModelMap modelMap) {
         group = StringUtils.isBlank(group) ? Constants.DEFAULT_GROUP : group;
         return longPollingService.getCollectSubscribleInfo(dataId, group, tenant);
     }
-    
+
     /**
      * Get client config listener lists of subscriber in local machine.
-     *
      */
     @GetMapping("/watcherConfigs")
     public SampleResult getSubClientConfigByIp(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam("ip") String ip, ModelMap modelMap) {
+                                               @RequestParam("ip") String ip, ModelMap modelMap) {
         return longPollingService.getCollectSubscribleInfoByIp(ip);
     }
 }

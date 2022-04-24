@@ -32,22 +32,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author <a href="mailto:liaochuntao@live.com">liaochuntao</a>
  */
 public class HttpClientManager {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientManager.class);
-    
+
     private static final int TIMEOUT = Integer.getInteger("nacos.http.timeout", 5000);
-    
+
     private static final RequestConfig DEFAULT_CONFIG = RequestConfig.custom().setConnectTimeout(TIMEOUT)
-            .setSocketTimeout(TIMEOUT << 1).build();
-    
+        .setSocketTimeout(TIMEOUT << 1).build();
+
     private static final NSyncHttpClient SYNC_HTTP_CLIENT = new NacosSyncHttpClient(
-            HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG).build());
-    
+        HttpClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG).build());
+
     private static final NAsyncHttpClient ASYNC_HTTP_CLIENT = new NacosAsyncHttpClient(
-            HttpAsyncClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG).build());
-    
+        HttpAsyncClients.custom().setDefaultRequestConfig(DEFAULT_CONFIG).build());
+
     private static final AtomicBoolean ALREADY_SHUTDOWN = new AtomicBoolean(false);
-    
+
     static {
         ThreadUtils.addShutdownHook(new Runnable() {
             @Override
@@ -55,17 +55,17 @@ public class HttpClientManager {
                 shutdown();
             }
         });
-        
+
     }
-    
+
     public static NSyncHttpClient getSyncHttpClient() {
         return SYNC_HTTP_CLIENT;
     }
-    
+
     public static NAsyncHttpClient getAsyncHttpClient() {
         return ASYNC_HTTP_CLIENT;
     }
-    
+
     /**
      * Shutdown http client manager and close http client.
      */
@@ -82,5 +82,4 @@ public class HttpClientManager {
         }
         LOGGER.warn("[HttpClientManager] Destruction of the end");
     }
-    
 }

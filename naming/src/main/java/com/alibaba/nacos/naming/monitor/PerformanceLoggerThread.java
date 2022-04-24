@@ -35,31 +35,27 @@ import java.util.concurrent.TimeUnit;
  *
  * @author nacos
  */
-
 @Component
 public class PerformanceLoggerThread {
-    
+
+    private static final long PERIOD = 5 * 60;
     @Autowired
     private ServiceManager serviceManager;
-    
     @Autowired
     private PushService pushService;
-    
     @Autowired
     private RaftCore raftCore;
-    
-    private static final long PERIOD = 5 * 60;
-    
+
     @PostConstruct
     public void init() {
         start();
     }
-    
+
     private void start() {
         PerformanceLogTask task = new PerformanceLogTask();
         GlobalExecutor.schedulePerformanceLogger(task, 30, PERIOD, TimeUnit.SECONDS);
     }
-    
+
     /**
      * Refresh metrics.
      */
@@ -71,7 +67,7 @@ public class PerformanceLoggerThread {
         MetricsMonitor.getMysqlHealthCheckMonitor().set(0);
         MetricsMonitor.getTcpHealthCheckMonitor().set(0);
     }
-    
+
     /**
      * collect metrics.
      */
@@ -79,19 +75,19 @@ public class PerformanceLoggerThread {
     public void collectMetrics() {
         int serviceCount = serviceManager.getServiceCount();
         MetricsMonitor.getDomCountMonitor().set(serviceCount);
-        
+
         int ipCount = serviceManager.getInstanceCount();
         MetricsMonitor.getIpCountMonitor().set(ipCount);
-        
+
         long maxPushCost = getMaxPushCost();
         MetricsMonitor.getMaxPushCostMonitor().set(maxPushCost);
-        
+
         long avgPushCost = getAvgPushCost();
         MetricsMonitor.getAvgPushCostMonitor().set(avgPushCost);
-        
+
         MetricsMonitor.getTotalPushMonitor().set(pushService.getTotalPush());
         MetricsMonitor.getFailedPushMonitor().set(pushService.getFailedPushCount());
-        
+
         if (raftCore.isLeader()) {
             MetricsMonitor.getLeaderStatusMonitor().set(1);
         } else if (raftCore.getPeerSet().local().state == RaftPeer.State.FOLLOWER) {
@@ -100,9 +96,38 @@ public class PerformanceLoggerThread {
             MetricsMonitor.getLeaderStatusMonitor().set(2);
         }
     }
-    
+
+    private long getMaxPushCost() {
+        long max = -1;
+
+        for (Map.Entry<String, Long> entry : PushService.pushCostMap.entrySet()) {
+            if (entry.getValue() > max) {
+                max = entry.getValue();
+            }
+        }
+
+        return max;
+    }
+
+    private long getAvgPushCost() {
+        int size = 0;
+        long totalCost = 0;
+        long avgCost = -1;
+
+        for (Map.Entry<String, Long> entry : PushService.pushCostMap.entrySet()) {
+            size += 1;
+            totalCost += entry.getValue();
+        }
+        PushService.pushCostMap.clear();
+
+        if (size > 0 && totalCost > 0) {
+            avgCost = totalCost / size;
+        }
+        return avgCost;
+    }
+
     class PerformanceLogTask implements Runnable {
-        
+
         @Override
         public void run() {
             try {
@@ -110,43 +135,13 @@ public class PerformanceLoggerThread {
                 int ipCount = serviceManager.getInstanceCount();
                 long maxPushCost = getMaxPushCost();
                 long avgPushCost = getAvgPushCost();
-                
+
                 Loggers.PERFORMANCE_LOG
-                        .info("PERFORMANCE:" + "|" + serviceCount + "|" + ipCount + "|" + maxPushCost + "|"
-                                + avgPushCost);
+                    .info("PERFORMANCE:" + "|" + serviceCount + "|" + ipCount + "|" + maxPushCost + "|"
+                        + avgPushCost);
             } catch (Exception e) {
                 Loggers.SRV_LOG.warn("[PERFORMANCE] Exception while print performance log.", e);
             }
-            
         }
-    }
-    
-    private long getMaxPushCost() {
-        long max = -1;
-        
-        for (Map.Entry<String, Long> entry : PushService.pushCostMap.entrySet()) {
-            if (entry.getValue() > max) {
-                max = entry.getValue();
-            }
-        }
-        
-        return max;
-    }
-    
-    private long getAvgPushCost() {
-        int size = 0;
-        long totalCost = 0;
-        long avgCost = -1;
-        
-        for (Map.Entry<String, Long> entry : PushService.pushCostMap.entrySet()) {
-            size += 1;
-            totalCost += entry.getValue();
-        }
-        PushService.pushCostMap.clear();
-        
-        if (size > 0 && totalCost > 0) {
-            avgCost = totalCost / size;
-        }
-        return avgCost;
     }
 }

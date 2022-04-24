@@ -36,23 +36,23 @@ import javax.annotation.PostConstruct;
 @RestController
 @RequestMapping(Constants.HEALTH_CONTROLLER_PATH)
 public class HealthController {
-    
+
     private DataSourceService dataSourceService;
-    
+
     private String heathUpStr = "UP";
-    
+
     private String heathDownStr = "DOWN";
-    
+
     private String heathWarnStr = "WARN";
-    
+
     @Autowired
     private ServerMemberManager memberManager;
-    
+
     @PostConstruct
     public void init() {
         dataSourceService = DynamicDataSource.getInstance().getDataSource();
     }
-    
+
     @GetMapping
     public String getHealth() {
         // TODO UP DOWN WARN
@@ -70,11 +70,11 @@ public class HealthController {
             }
             if (!memberManager.isInIpList()) {
                 sb.append("server ip ").append(InetUtils.getSelfIp())
-                        .append(" is not in the serverList of address server. ");
+                    .append(" is not in the serverList of address server. ");
             }
         }
-        
+
         return sb.toString();
     }
-    
+
 }
