@@ -53,10 +53,10 @@ public class ListenerController {
      */
     @GetMapping
     public GroupkeyListenserStatus getAllSubClientConfigByIp(@RequestParam("ip") String ip,
-            @RequestParam(value = "all", required = false) boolean all,
-            @RequestParam(value = "tenant", required = false) String tenant,
-            @RequestParam(value = "sampleTime", required = false, defaultValue = "1") int sampleTime, ModelMap modelMap)
-            throws Exception {
+                                                             @RequestParam(value = "all", required = false) boolean all,
+                                                             @RequestParam(value = "tenant", required = false) String tenant,
+                                                             @RequestParam(value = "sampleTime", required = false, defaultValue = "1") int sampleTime, ModelMap modelMap)
+        throws Exception {
         SampleResult collectSampleResult = configSubService.getCollectSampleResultByIp(ip, sampleTime);
         GroupkeyListenserStatus gls = new GroupkeyListenserStatus();
         gls.setCollectStatus(200);

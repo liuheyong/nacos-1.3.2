@@ -31,11 +31,11 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author zongtanghu
  */
 public class DefaultSharePublisher extends DefaultPublisher {
-    
+
     private final Map<Class<? extends SlowEvent>, Set<Subscriber>> subMappings = new ConcurrentHashMap<Class<? extends SlowEvent>, Set<Subscriber>>();
-    
+
     private final Lock lock = new ReentrantLock();
-    
+
     /**
      * Add listener for default share publisher.
      *
@@ -47,7 +47,7 @@ public class DefaultSharePublisher extends DefaultPublisher {
         Class<? extends SlowEvent> subSlowEventType = (Class<? extends SlowEvent>) subscribeType;
         // For adding to parent class attributes synchronization.
         subscribers.add(subscriber);
-        
+
         lock.lock();
         try {
             Set<Subscriber> sets = subMappings.get(subSlowEventType);
@@ -62,7 +62,7 @@ public class DefaultSharePublisher extends DefaultPublisher {
             lock.unlock();
         }
     }
-    
+
     /**
      * Remove listener for default share publisher.
      *
@@ -74,11 +74,11 @@ public class DefaultSharePublisher extends DefaultPublisher {
         Class<? extends SlowEvent> subSlowEventType = (Class<? extends SlowEvent>) subscribeType;
         // For removing to parent class attributes synchronization.
         subscribers.remove(subscriber);
-        
+
         lock.lock();
         try {
             Set<Subscriber> sets = subMappings.get(subSlowEventType);
-            
+
             if (sets != null && sets.contains(subscriber)) {
                 sets.remove(subscriber);
             }
@@ -86,26 +86,26 @@ public class DefaultSharePublisher extends DefaultPublisher {
             lock.unlock();
         }
     }
-    
+
     @Override
     public void receiveEvent(Event event) {
-        
+
         final long currentEventSequence = event.sequence();
         // get subscriber set based on the slow EventType.
         final Class<? extends SlowEvent> slowEventType = (Class<? extends SlowEvent>) event.getClass();
-        
+
         // Get for Map, the algorithm is O(1).
         Set<Subscriber> subscribers = subMappings.get(slowEventType);
-        
+
         // Notification single event subscriber
         for (Subscriber subscriber : subscribers) {
             // Whether to ignore expiration events
             if (subscriber.ignoreExpireEvent() && lastEventSequence > currentEventSequence) {
                 LOGGER.debug("[NotifyCenter] the {} is unacceptable to this subscriber, because had expire",
-                        event.getClass());
+                    event.getClass());
                 continue;
             }
-            
+
             // Notify single subscriber for slow event.
             notifySubscriber(subscriber, event);
         }

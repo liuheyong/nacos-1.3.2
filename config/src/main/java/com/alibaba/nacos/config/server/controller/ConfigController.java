@@ -136,22 +136,17 @@ public class ConfigController {
         if (StringUtils.isBlank(betaIps)) {
             if (StringUtils.isBlank(tag)) {
                 persistService.insertOrUpdate(srcIp, srcUser, configInfo, time, configAdvanceInfo, true);
-                ConfigChangePublisher
-                    .notifyConfigChange(new ConfigDataChangeEvent(false, dataId, group, tenant, time.getTime()));
+                ConfigChangePublisher.notifyConfigChange(new ConfigDataChangeEvent(false, dataId, group, tenant, time.getTime()));
             } else {
                 persistService.insertOrUpdateTag(configInfo, tag, srcIp, srcUser, time, true);
-                ConfigChangePublisher.notifyConfigChange(
-                    new ConfigDataChangeEvent(false, dataId, group, tenant, tag, time.getTime()));
+                ConfigChangePublisher.notifyConfigChange(new ConfigDataChangeEvent(false, dataId, group, tenant, tag, time.getTime()));
             }
         } else {
             // beta publish
             persistService.insertOrUpdateBeta(configInfo, betaIps, srcIp, srcUser, time, true);
-            ConfigChangePublisher
-                .notifyConfigChange(new ConfigDataChangeEvent(true, dataId, group, tenant, time.getTime()));
+            ConfigChangePublisher.notifyConfigChange(new ConfigDataChangeEvent(true, dataId, group, tenant, time.getTime()));
         }
-        ConfigTraceService
-            .logPersistenceEvent(dataId, group, tenant, requestIpApp, time.getTime(), InetUtils.getSelfIp(),
-                ConfigTraceService.PERSISTENCE_EVENT_PUB, content);
+        ConfigTraceService.logPersistenceEvent(dataId, group, tenant, requestIpApp, time.getTime(), InetUtils.getSelfIp(), ConfigTraceService.PERSISTENCE_EVENT_PUB, content);
         return true;
     }
 
@@ -167,15 +162,13 @@ public class ConfigController {
     public void getConfig(HttpServletRequest request, HttpServletResponse response,
                           @RequestParam("dataId") String dataId, @RequestParam("group") String group,
                           @RequestParam(value = "tenant", required = false, defaultValue = StringUtils.EMPTY) String tenant,
-                          @RequestParam(value = "tag", required = false) String tag)
-        throws IOException, ServletException, NacosException {
+                          @RequestParam(value = "tag", required = false) String tag) throws IOException, ServletException, NacosException {
         // check tenant
         ParamUtils.checkTenant(tenant);
         tenant = processTenant(tenant);
         // check params
         ParamUtils.checkParam(dataId, group, "datumId", "content");
         ParamUtils.checkParam(tag);
-
         final String clientIp = RequestUtil.getRemoteIp(request);
         inner.doGetConfig(request, response, dataId, group, tenant, tag, clientIp);
     }
@@ -239,8 +232,7 @@ public class ConfigController {
      */
     @DeleteMapping(params = "delType=ids")
     @Secured(action = ActionTypes.WRITE, parser = ConfigResourceParser.class)
-    public RestResult<Boolean> deleteConfigs(HttpServletRequest request, HttpServletResponse response,
-                                             @RequestParam(value = "ids") List<Long> ids) {
+    public RestResult<Boolean> deleteConfigs(HttpServletRequest request, HttpServletResponse response, @RequestParam(value = "ids") List<Long> ids) {
         String clientIp = RequestUtil.getRemoteIp(request);
         final Timestamp time = TimeUtils.getCurrentTime();
         List<ConfigInfo> configInfoList = persistService.removeConfigInfoByIds(ids, clientIp, null);
@@ -271,11 +263,11 @@ public class ConfigController {
 
     /**
      * The client listens for configuration changes.
+     * 客户端侦听配置更改.
      */
     @PostMapping("/listener")
     @Secured(action = ActionTypes.READ, parser = ConfigResourceParser.class)
-    public void listener(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+    public void listener(HttpServletRequest request, HttpServletResponse response) throws IOException {
         request.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true);
         String probeModify = request.getParameter("Listening-Configs");
         if (StringUtils.isBlank(probeModify)) {

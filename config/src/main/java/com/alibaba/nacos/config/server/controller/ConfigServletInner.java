@@ -31,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -111,28 +110,23 @@ public class ConfigServletInner {
     /**
      * 轮询接口.
      */
-    public String doPollingConfig(HttpServletRequest request, HttpServletResponse response,
-                                  Map<String, String> clientMd5Map, int probeRequestSize) throws IOException {
-
+    public void doPollingConfig(HttpServletRequest request, HttpServletResponse response,
+                                Map<String, String> clientMd5Map, int probeRequestSize) throws IOException {
         // Long polling.
         if (LongPollingService.isSupportLongPolling(request)) {
             longPollingService.addLongPollingClient(request, response, clientMd5Map, probeRequestSize);
-            return HttpServletResponse.SC_OK + "";
+            return;
         }
-
         // Compatible with short polling logic.
         List<String> changedGroups = MD5Util.compareMd5(request, response, clientMd5Map);
-
         // Compatible with short polling result.
         String oldResult = MD5Util.compareMd5OldResult(changedGroups);
         String newResult = MD5Util.compareMd5ResultString(changedGroups);
-
         String version = request.getHeader(Constants.CLIENT_VERSION_HEADER);
         if (version == null) {
             version = "2.0.0";
         }
         int versionNum = Protocol.getVersionNumber(version);
-
         // Befor 2.0.4 version, return value is put into header.
         if (versionNum < START_LONG_POLLING_VERSION_NUM) {
             response.addHeader(Constants.PROBE_MODIFY_RESPONSE, oldResult);
@@ -140,22 +134,18 @@ public class ConfigServletInner {
         } else {
             request.setAttribute("content", newResult);
         }
-
         Loggers.AUTH.info("new content:" + newResult);
-
         // Disable cache.
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
         response.setHeader("Cache-Control", "no-cache,no-store");
         response.setStatus(HttpServletResponse.SC_OK);
-        return HttpServletResponse.SC_OK + "";
     }
 
     /**
      * Execute to get config API.
      */
-    public String doGetConfig(HttpServletRequest request, HttpServletResponse response, String dataId, String group,
-                              String tenant, String tag, String clientIp) throws IOException, ServletException {
+    public void doGetConfig(HttpServletRequest request, HttpServletResponse response, String dataId, String group, String tenant, String tag, String clientIp) throws IOException {
         final String groupKey = GroupKey2.getKey(dataId, group, tenant);
         String autoTag = request.getHeader("Vipserver-Tag");
         String requestIpApp = RequestUtil.getAppName(request);
@@ -176,10 +166,8 @@ public class ConfigServletInner {
                         }
                     }
 
-                    final String configType =
-                        (null != cacheItem.getType()) ? cacheItem.getType() : FileTypeEnum.TEXT.getFileType();
+                    final String configType = (null != cacheItem.getType()) ? cacheItem.getType() : FileTypeEnum.TEXT.getFileType();
                     response.setHeader("Config-Type", configType);
-
                     String contentTypeHeader;
                     try {
                         contentTypeHeader = FileTypeEnum.valueOf(configType.toUpperCase()).getContentType();
@@ -239,7 +227,7 @@ public class ConfigServletInner {
 
                                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                                 response.getWriter().println("config data not exist");
-                                return HttpServletResponse.SC_NOT_FOUND + "";
+                                return;
                             }
                         }
                     } else {
@@ -271,7 +259,7 @@ public class ConfigServletInner {
 
                             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                             response.getWriter().println("config data not exist");
-                            return HttpServletResponse.SC_NOT_FOUND + "";
+                            return;
                         }
                     }
                 }
@@ -326,7 +314,6 @@ public class ConfigServletInner {
 
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().println("config data not exist");
-            return HttpServletResponse.SC_NOT_FOUND + "";
 
         } else {
 
@@ -334,11 +321,9 @@ public class ConfigServletInner {
 
             response.setStatus(HttpServletResponse.SC_CONFLICT);
             response.getWriter().println("requested file is being modified, please try later.");
-            return HttpServletResponse.SC_CONFLICT + "";
 
         }
 
-        return HttpServletResponse.SC_OK + "";
     }
 
 }

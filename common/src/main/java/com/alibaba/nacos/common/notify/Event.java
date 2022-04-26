@@ -27,11 +27,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @SuppressWarnings({"PMD.AbstractClassShouldStartWithAbstractNamingRule"})
 public abstract class Event implements Serializable {
-    
+
     private static final AtomicLong SEQUENCE = new AtomicLong(0);
-    
+
     private final long sequence = SEQUENCE.getAndIncrement();
-    
+
     /**
      * Event sequence number, which can be used to handle the sequence of events.
      *
@@ -40,6 +40,6 @@ public abstract class Event implements Serializable {
     public long sequence() {
         return sequence;
     }
-    
+
 }
 

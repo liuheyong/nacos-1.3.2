@@ -27,7 +27,7 @@ import com.alibaba.nacos.core.utils.ApplicationUtils;
  * @author <a href="mailto:liaochuntao@live.com">liaochuntao</a>
  */
 public class ConfigChangePublisher {
-    
+
     /**
      * Notify ConfigChange.
      *
@@ -39,5 +39,5 @@ public class ConfigChangePublisher {
         }
         NotifyCenter.publishEvent(event);
     }
-    
+
 }

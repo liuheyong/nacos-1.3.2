@@ -16,14 +16,14 @@
 
 package com.alibaba.nacos.example;
 
-import java.util.Properties;
-
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.listener.Event;
 import com.alibaba.nacos.api.naming.listener.EventListener;
 import com.alibaba.nacos.api.naming.listener.NamingEvent;
+
+import java.util.Properties;
 
 /**
  * Nacos naming example.

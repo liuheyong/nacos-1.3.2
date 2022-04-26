@@ -16,13 +16,13 @@
 
 package com.alibaba.nacos.example;
 
-import java.util.Properties;
-import java.util.concurrent.Executor;
-
 import com.alibaba.nacos.api.NacosFactory;
 import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.config.listener.Listener;
 import com.alibaba.nacos.api.exception.NacosException;
+
+import java.util.Properties;
+import java.util.concurrent.Executor;
 
 /**
  * Config service example.
@@ -66,6 +66,5 @@ public class ConfigExample {
         content = configService.getConfig(dataId, group, 5000);
         System.out.println(content);
         Thread.sleep(300000);
-
     }
 }
