@@ -69,7 +69,7 @@ public class LongPollingService {
         // Register LocalDataChangeEvent to NotifyCenter.
         NotifyCenter.registerToPublisher(LocalDataChangeEvent.class, NotifyCenter.ringBufferSize);
 
-        // Register A Subscriber to subscribe LocalDataChangeEvent.
+        // 注册一个订阅者来订阅 LocalDataChangeEvent
         NotifyCenter.registerSubscriber(new Subscriber() {
 
             @Override
@@ -77,6 +77,7 @@ public class LongPollingService {
                 if (isFixedPolling()) {
                     // Ignore.
                 } else {
+                    //通过线程池执行 DataChangeTask 任务
                     if (event instanceof LocalDataChangeEvent) {
                         LocalDataChangeEvent evt = (LocalDataChangeEvent) event;
                         ConfigExecutor.executeLongPolling(new DataChangeTask(evt.groupKey, evt.isBeta, evt.betaIps));
@@ -255,6 +256,7 @@ public class LongPollingService {
 
     /**
      * Add LongPollingClient.
+     * 长轮询的核心处理逻辑，主要作用是把客户端的长轮询请求封装成 ClientLongPolling 交给 scheduler 执行
      *
      * @param req              HttpServletRequest.
      * @param rsp              HttpServletResponse.
@@ -268,13 +270,15 @@ public class LongPollingService {
         String tag = req.getHeader("Vipserver-Tag");
         int delayTime = SwitchService.getSwitchInteger(SwitchService.FIXED_DELAY_TIME, 500);
 
-        // Add delay time for LoadBalance, and one response is returned 500 ms in advance to avoid client timeout.
+        //为 LoadBalance 添加延迟时间，并提前 500ms 返回响应，避免客户端超时（即超时时间减 500ms 后赋值给 timeout 变量）
         long timeout = Math.max(10000, Long.parseLong(str) - delayTime);
+        //判断是否为固定轮询，是则 30s 后执行；否则 29.5s 后执行
         if (isFixedPolling()) {
             timeout = Math.max(10000, getFixedPollingInterval());
-            // Do nothing but set fix polling timeout.
+            //除了设置修复轮询超时之外什么都不做
         } else {
             long start = System.currentTimeMillis();
+            //和服务端的数据进行 MD5 对比，发生变化则直接返回
             List<String> changedGroups = MD5Util.compareMd5(req, rsp, clientMd5Map);
             if (changedGroups.size() > 0) {
                 generateResponse(req, rsp, changedGroups);
@@ -290,10 +294,11 @@ public class LongPollingService {
             }
         }
         String ip = RequestUtil.getRemoteIp(req);
-        // Must be called by http thread, or send response.
+        // 一定要由 HTTP 线程调用，否则离开容器会立即发送响应
         final AsyncContext asyncContext = req.startAsync();
         // AsyncContext.setTimeout() is incorrect, Control by oneself
         asyncContext.setTimeout(0L);
+        //执行 ClientLongPolling 线程
         ConfigExecutor.executeLongPolling(new ClientLongPolling(asyncContext, clientMd5Map, ip, probeRequestSize, timeout, appName, tag));
     }
 
@@ -345,19 +350,19 @@ public class LongPollingService {
         public void run() {
             try {
                 ConfigCacheService.getContentBetaMd5(groupKey);
+                //遍历 allSubs 中的客户端长轮询请求
                 for (Iterator<ClientLongPolling> iter = allSubs.iterator(); iter.hasNext(); ) {
                     ClientLongPolling clientSub = iter.next();
+                    //比较每一个客户端长轮询请求携带的groupKey，如果服务端变更的配置和客户端请求关注的配置一致，则直接返回
                     if (clientSub.clientMd5Map.containsKey(groupKey)) {
-                        // If published tag is not in the beta list, then it skipped.
+                        // //如果 beta 发布且不在 beta 列表，则直接跳过
                         if (isBeta && !CollectionUtils.contains(betaIps, clientSub.ip)) {
                             continue;
                         }
-
-                        // If published tag is not in the tag list, then it skipped.
+                        // 如果 tag 发布且不在 tag 列表，则直接跳过
                         if (StringUtils.isNotBlank(tag) && !tag.equals(clientSub.tag)) {
                             continue;
                         }
-
                         getRetainIps().put(clientSub.ip, System.currentTimeMillis());
                         iter.remove(); // Delete subscribers' relationships.
                         LogUtil.CLIENT_LOG
@@ -365,7 +370,8 @@ public class LongPollingService {
                                 RequestUtil
                                     .getRemoteIp((HttpServletRequest) clientSub.asyncContext.getRequest()),
                                 "polling", clientSub.clientMd5Map.size(), clientSub.probeRequestSize, groupKey);
-                        clientSub.sendResponse(Arrays.asList(groupKey));
+                        //发送响应
+                        clientSub.sendResponse(Collections.singletonList(groupKey));
                     }
                 }
             } catch (Throwable t) {
@@ -407,24 +413,26 @@ public class LongPollingService {
 
         @Override
         public void run() {
+            //服务端收到请求之后，不立即返回，没有变更则在延后 (30-0.5)s 把请求结果返回给客户端；
             asyncTimeoutFuture = ConfigExecutor.scheduleLongPolling(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         getRetainIps().put(ClientLongPolling.this.ip, System.currentTimeMillis());
-
                         // Delete subsciber's relations.
                         allSubs.remove(ClientLongPolling.this);
-
+                        //判断是否为固定轮询
                         if (isFixedPolling()) {
                             LogUtil.CLIENT_LOG
                                 .info("{}|{}|{}|{}|{}|{}", (System.currentTimeMillis() - createTime), "fix",
                                     RequestUtil.getRemoteIp((HttpServletRequest) asyncContext.getRequest()),
                                     "polling", clientMd5Map.size(), probeRequestSize);
+                            //比较数据的 MD5 值，判断是否发生变更
                             List<String> changedGroups = MD5Util
                                 .compareMd5((HttpServletRequest) asyncContext.getRequest(),
                                     (HttpServletResponse) asyncContext.getResponse(), clientMd5Map);
                             if (changedGroups.size() > 0) {
+                                //并将变更的结果通过response返回给客户端
                                 sendResponse(changedGroups);
                             } else {
                                 sendResponse(null);
@@ -439,9 +447,7 @@ public class LongPollingService {
                     } catch (Throwable t) {
                         LogUtil.DEFAULT_LOG.error("long polling error:" + t.getMessage(), t.getCause());
                     }
-
                 }
-
             }, timeoutTime, TimeUnit.MILLISECONDS);
             allSubs.add(this);
         }

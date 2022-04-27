@@ -273,17 +273,15 @@ public class ConfigController {
         if (StringUtils.isBlank(probeModify)) {
             throw new IllegalArgumentException("invalid probeModify");
         }
-
         probeModify = URLDecoder.decode(probeModify, Constants.ENCODE);
-
         Map<String, String> clientMd5Map;
         try {
+            //计算 MD5 值
             clientMd5Map = MD5Util.getClientMd5Map(probeModify);
         } catch (Throwable e) {
             throw new IllegalArgumentException("invalid probeModify");
         }
-
-        // do long-polling
+        // 进行长轮询逻辑
         inner.doPollingConfig(request, response, clientMd5Map, probeModify.length());
     }
 

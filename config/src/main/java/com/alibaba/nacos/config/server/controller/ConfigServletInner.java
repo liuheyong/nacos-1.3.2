@@ -112,14 +112,14 @@ public class ConfigServletInner {
      */
     public void doPollingConfig(HttpServletRequest request, HttpServletResponse response,
                                 Map<String, String> clientMd5Map, int probeRequestSize) throws IOException {
-        // Long polling.
+        //长轮询
         if (LongPollingService.isSupportLongPolling(request)) {
             longPollingService.addLongPollingClient(request, response, clientMd5Map, probeRequestSize);
             return;
         }
-        // Compatible with short polling logic.
+        // 兼容短轮询逻辑.
         List<String> changedGroups = MD5Util.compareMd5(request, response, clientMd5Map);
-        // Compatible with short polling result.
+        // 兼容短轮询结果.
         String oldResult = MD5Util.compareMd5OldResult(changedGroups);
         String newResult = MD5Util.compareMd5ResultString(changedGroups);
         String version = request.getHeader(Constants.CLIENT_VERSION_HEADER);
